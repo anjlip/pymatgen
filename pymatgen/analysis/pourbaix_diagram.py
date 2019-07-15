@@ -911,7 +911,6 @@ class PourbaixDiagram(MSONable):
         return cls(decoded_entries, d.get('comp_dict'),
                    d.get('conc_dict'))
 
-
 class PourbaixPlotter:
     """
     A plotter class for phase diagrams.
@@ -991,6 +990,23 @@ class PourbaixPlotter:
         plt.ylabel("E (V)")
         plt.title(title, fontsize=20, fontweight='bold')
         return plt
+
+    def get_entry_stability(self, entry, pH_range=None, pH_resolution=100,
+                             V_range=None, V_resolution=100, e_hull_max=1,
+                             **kwargs):
+        if pH_range is None:
+            pH_range = [-2, 16]
+        if V_range is None:
+            V_range = [-3, 3]
+        # plot the Pourbaix diagram
+        plt = self.get_pourbaix_plot(**kwargs)
+        pH, V = np.mgrid[pH_range[0]:pH_range[1]:pH_resolution * 1j,
+                V_range[0]:V_range[1]:V_resolution * 1j]
+
+        stability = self._pd.get_decomposition_energy(entry, pH, V)
+        stability_bool = (stability < e_hull_max).astype(int)
+
+        return (stability_bool, (pH, V))
 
     def plot_entry_stability(self, entry, pH_range=None, pH_resolution=100,
                              V_range=None, V_resolution=100, e_hull_max=1,
